@@ -52,3 +52,6 @@ BERT-Base-Cased|BERT|97.07
 2. all scripts are located in notebook directory
 3. `<A|R> NUM` means `A` was written by Andreas and `R` by Ruben. `NUM` means the order to run the experiments
  
+## Contributors
+[![](https://github.com/andreaschandra/git-assets/blob/master/pictures/andreas.png)](https://github.com/andreaschandra)
+[![](https://github.com/andreaschandra/git-assets/blob/master/pictures/ruben.png)](https://github.com/rubentea16)
