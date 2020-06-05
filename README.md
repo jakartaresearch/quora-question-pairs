@@ -40,5 +40,5 @@ Exp-4|TF-IDF - Catboost|75.39
 ## Quick Start
 1. You need download the dataset first in cross-validation
 2. all scripts are located in notebook directory
-3. <A|R><NUM> means A was written by Andreas and R by Ruben. <NUM> means the order to run the experiments
+3. `<A|R> NUM` means `A` was written by Andreas and `R` by Ruben. `NUM` means the order to run the experiments
  
