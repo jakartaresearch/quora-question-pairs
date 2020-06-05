@@ -6,6 +6,7 @@ Over 100 million people visit Quora every month, so it's no surprise that many p
 Currently, Quora uses a Random Forest model to identify duplicate questions. In this competition, Kagglers are challenged to tackle this natural language processing problem by applying advanced techniques to classify whether question pairs are duplicates or not. Doing so will make it easier to find high quality answers to questions resulting in an improved experience for Quora writers, seekers, and readers. --Kaggle
 
 Start Project: 25 April 2020
+End Project: 31 May 2020
 
 Download Clean Data [here](https://drive.google.com/open?id=1_y-K7YJsLg9uIivTsFY_I9uh93FACOlF)
 
