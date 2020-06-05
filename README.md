@@ -37,6 +37,13 @@ Exp-2|CV - Catboost|74.66
 Exp-3|TF-IDF - XGBoost|69.14
 Exp-4|TF-IDF - Catboost|75.39
 
+We also experimented using deep learning
+
+Name|Stack|Score
+---|---|---
+Basic LSTM|LSTM|80.32
+BERT-Base-Cased|BERT|97.07
+
 ## Quick Start
 1. You need download the dataset first in cross-validation
 2. all scripts are located in notebook directory
