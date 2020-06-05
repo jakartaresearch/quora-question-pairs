@@ -1,0 +1,7 @@
+*.pkl
+*.csv
+*.tsv
+*.rar
+.ipynb_checkpoints/
+notebook/__pycache__/
+notebook/catboost_info/
