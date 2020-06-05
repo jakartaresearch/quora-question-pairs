@@ -16,9 +16,13 @@ Download Cross Validation Data [here](https://drive.google.com/open?id=18haftEPe
     |--master
     |--dev
     
-## References
+## Main References
 Title|Author|Year
 ---|---|---
+Aiming beyond the obvious: Identifying non-obvious cases in semantic similarity datasets|Peinelt et al.|2020
+Bilateral multi-perspective matching for natural language sentences|Wang et al.|2017
+Large Scale Question Paraphrase Retrieval with Smoothed Deep Metric Learning|Bonadiman et al.|2019
+Retrofitting Contextualized Word Embeddings with Paraphrases|Shi et al.|2019
 
 ## Requirements
 ```
@@ -27,12 +31,14 @@ pip install -r requirements.txt
 
 ## Result
 Name|Stack|Score
-B-1|CV - XGBoost|---
-B-2|CV - Catboost|---
-B-3|TF-IDF - XGBoost|---
-B-4|TF-IDF - Catboost|---
+---|---|---
+Exp-1|CV - XGBoost|68.09
+Exp-2|CV - Catboost|74.66
+Exp-3|TF-IDF - XGBoost|69.14
+Exp-4|TF-IDF - Catboost|75.39
 
 ## Quick Start
-1. TBD
-2. TBD
-3. TBD
+1. You need download the dataset first in cross-validation
+2. all scripts are located in notebook directory
+3. <A|R><NUM> means A was written by Andreas and R by Ruben. <NUM> means the order to run the experiments
+ 
