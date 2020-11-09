@@ -116,7 +116,7 @@ def create_data_loader(train, val):
                                  batch_size=opt.batch_size)
     return train_data_loader, val_data_loader
 
-def training(train_dataloader, ):
+def training(train_dataloader):
     t0 = time.time()
     total_train_loss = 0
     total_train_accuracy = 0
