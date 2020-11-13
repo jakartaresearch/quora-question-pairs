@@ -16,7 +16,7 @@ from cleansing import clean_text
 
 
 def read_csv(path):
-    """Read file csv
+    """Read file csv.
 
     Args:
         path (str): path file
@@ -30,7 +30,7 @@ def read_csv(path):
 
 
 def remove_row_nan(df):
-    """Remove missing value per row
+    """Remove missing value per row.
 
     Args:
         df (dataFrame): dataFrame
@@ -56,7 +56,7 @@ def remove_punctuation(text):
 
 
 def simple_cleansing(text):
-    """[summary]
+    """Run a simple cleansing to remove uncessary text.
 
     Args:
         text (str): an input of text
@@ -75,7 +75,7 @@ def simple_cleansing(text):
 
 
 def transform(train, test, vectorizer):
-    """[summary]
+    """Transform text into vector.
 
     Args:
         train (series): a series of train text data
@@ -93,7 +93,7 @@ def transform(train, test, vectorizer):
 
 
 def concat(q1, q2):
-    """Concatenate question1 and question2
+    """Concatenate question1 and question2.
 
     Args:
         q1 (array): question1
@@ -106,7 +106,7 @@ def concat(q1, q2):
 
 
 def metrics(y_true, y_pred):
-    """[summary]
+    """Calculate metrics.
 
     Args:
         y_true (array): actual label
@@ -177,14 +177,23 @@ def model_wrapper(x_train, x_test, y_train, y_test, split_index, feat):
     return score_list
 
 
-def main(split_folders, test_scenario, report_path):
+def main(split_folders, test_scenario, report_path, model_path):
+    """Run all process.
 
-    split_folders = glob.glob('../data/cross_validation_data/*')
+    Args:
+        split_folders (str): cross val folders
+        test_scenario (str): parameter for testing code
+        report_path (str): path for report directory
+        model_path (str): path for saved model
+    """
+
+    split_folders = glob.glob(os.path.join(split_folders, "*"))
     score_list = []
     for split_index, path in enumerate(split_folders, 1):
         test_path, train_path = glob.glob(os.path.join(path, '*'))
         print("step 1/7 :read data")
         d_train, d_test = read_csv(train_path), read_csv(test_path)
+
         print("step 2/7 :remove nan")
         d_train, d_test = remove_row_nan(d_train), remove_row_nan(d_test)
         d_train = d_train.sample(frac=1)
@@ -248,12 +257,12 @@ def main(split_folders, test_scenario, report_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data-path", help="path for data train", required=True)
+        "-d", "--data-path", help="path for data train", default="data/cross_validation_data", required=True)
     parser.add_argument(
-        "test-scenario", help="testing for code running", default=False, required=True)
+        "-t", "--test-scenario", help="testing for code running", action="store_true")
     parser.add_argument(
-        "--report_path", help="path for saving report model performance", default="reports", required=True)
+        "-r", "--report-path", help="path for saving report model performance", default="reports", required=True)
     parser.add_argument(
-        "--model_path", "model path for vectorizer and model", default="models", required=True)
-
-    main()
+        "--model-path", help="model path for vectorizer and model", default="models", required=True)
+    args = parser.parse_args()
+    main(args.data_path, args.test_scenario, args.report_path, args.model_path)
