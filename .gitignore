@@ -2,6 +2,7 @@
 *.csv
 *.tsv
 *.rar
+*.logs
 .ipynb_checkpoints/
 notebook/__pycache__/
 notebook/catboost_info/
