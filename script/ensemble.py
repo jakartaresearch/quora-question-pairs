@@ -12,7 +12,9 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from nltk.corpus import stopwords
 from catboost import CatBoostClassifier
 from xgboost import XGBClassifier
+from joblib import dump
 from cleansing import clean_text
+from LogWatcher import log
 
 
 def read_csv(path):
@@ -124,7 +126,7 @@ def metrics(y_true, y_pred):
 
 
 def model(x_train, x_test, y_train, y_test, algo):
-    """Run experiment of a given algorithm
+    """Run experiment of a given algorithm.
 
     Args:
         x_train (array): input train
@@ -145,7 +147,7 @@ def model(x_train, x_test, y_train, y_test, algo):
 
 
 def model_wrapper(x_train, x_test, y_train, y_test, split_index, feat):
-    """A model wrapper to run all experiment ensemble models.
+    """Model wrapper to run all experiment ensemble models.
 
     Args:
         x_train ([type]): [description]
@@ -177,6 +179,63 @@ def model_wrapper(x_train, x_test, y_train, y_test, split_index, feat):
     return score_list
 
 
+def fit_model_all(d_train, d_test, algo, extranction):
+    """Fitting all the data to the model 
+
+    Args:
+        X (array): data input
+        y (array): data target
+        algo (model): class algorithm
+
+    Returns:
+        model: return a model after fit
+    """
+    d_data = pd.concat((d_train, d_test), axis=0)
+    d_data.reset_index(drop=True, inplace=True)
+
+    cv1 = extranction()
+    q1 = cv1.fit_transform(d_data.q1_clean)
+    cv2 = extranction()
+    q2 = cv2.fit_transform(d_data.q2_clean)
+
+    X = concat(q1, q2)
+    y = d_data.is_duplicate.values
+    model = algo()
+    model.fit(X, y)
+
+    return cv1, cv2, model
+
+
+def wrapper_fit_all(d_train, d_test, model_path):
+    cv1, cv2, model = fit_model_all(
+        d_train, d_test, XGBClassifier, CountVectorizer)
+    save_model([cv1, cv2, model], os.path.join(model_path, "cv_xgb.pkl"))
+
+    cv1, cv2, model = fit_model_all(
+        d_train, d_test, CatBoostClassifier, CountVectorizer)
+    save_model([cv1, cv2, model], os.path.join(model_path, "cv_cat.pkl"))
+
+    tfidf1, tfidf2, model = fit_model_all(
+        d_train, d_test, XGBClassifier, TfidfVectorizer)
+    save_model([tfidf1, tfidf2, model], os.path.join(
+        model_path, "tfidf_xgb.pkl"))
+
+    tfidf1, tfidf2, model = fit_model_all(
+        d_train, d_test, CatBoostClassifier, TfidfVectorizer)
+    save_model([tfidf1, tfidf2, model], os.path.join(
+        model_path, "tfidf_cat.pkl"))
+
+
+def save_model(model, filename):
+    """[summary]
+
+    Args:
+        model ([type]): [description]
+        filename ([type]): [description]
+    """
+    dump(model, filename)
+
+
 def main(split_folders, test_scenario, report_path, model_path):
     """Run all process.
 
@@ -191,22 +250,26 @@ def main(split_folders, test_scenario, report_path, model_path):
     score_list = []
     for split_index, path in enumerate(split_folders, 1):
         test_path, train_path = glob.glob(os.path.join(path, '*'))
-        print("step 1/7 :read data")
+        logger.info("step 1/7 :read data")
         d_train, d_test = read_csv(train_path), read_csv(test_path)
 
-        print("step 2/7 :remove nan")
+        logger.info("step 2/7 :remove nan")
         d_train, d_test = remove_row_nan(d_train), remove_row_nan(d_test)
+
         d_train = d_train.sample(frac=1)
         d_test = d_test.sample(frac=1)
+
         d_train.reset_index(inplace=True)
         d_test.reset_index(inplace=True)
 
         if test_scenario:
+            logger.warning(
+                "running using test scenario, only collect 10 samples")
             d_train = d_train.loc[:10, :]
             d_test = d_test.loc[:10, :]
 
         # cleansing step
-        print("step 3/7 :cleansing...")
+        logger.info("step 3/7 :cleansing")
         d_train["q1_clean"] = d_train.question1.apply(clean_text)
         d_train["q2_clean"] = d_train.question2.apply(clean_text)
         d_test["q1_clean"] = d_test.question1.apply(clean_text)
@@ -216,7 +279,7 @@ def main(split_folders, test_scenario, report_path, model_path):
         y_test = d_test.is_duplicate.values
 
         # transformation step
-        print("step 4/7 :transforming cv...")
+        logger.info("step 4/7 :transforming cv")
         cv_q1, x_train_q1, x_test_q1 = transform(
             d_train.q1_clean, d_test.q1_clean, CountVectorizer)
         cv_q2, x_train_q2, x_test_q2 = transform(
@@ -226,13 +289,13 @@ def main(split_folders, test_scenario, report_path, model_path):
         x_test = concat(x_test_q1, x_test_q2)
 
         # modeling
-        print("step 5/7 :fitting...")
+        logger.info("step 5/7 :fitting")
         feat = "count vectorizer"
         scores = model_wrapper(x_train, x_test, y_train,
                                y_test, split_index, feat)
         score_list.extend(scores)
 
-        print("step 6/7 :transforming tfidf...")
+        logger.info("step 6/7 :transforming tfidf")
         cv_q1, x_train_q1, x_test_q1 = transform(
             d_train.q1_clean, d_test.q1_clean, TfidfVectorizer)
         cv_q2, x_train_q2, x_test_q2 = transform(
@@ -241,17 +304,22 @@ def main(split_folders, test_scenario, report_path, model_path):
         x_train = concat(x_train_q1, x_train_q2)
         x_test = concat(x_test_q1, x_test_q2)
 
-        print("step 7/7 :fitting...")
+        logger.info("step 7/7 :fitting")
         feat = "tfidf"
         scores = model_wrapper(x_train, x_test, y_train,
                                y_test, split_index, feat)
         score_list.extend(scores)
 
-        print("done...")
-
+    logger.info("saving reports...")
     today = datetime.today().strftime("%d-%m-%Y")
     pickle.dump(score_list, open(
         f'{report_path}/{today}_reports.pkl', 'wb'))
+
+    # fit all data to the model
+    if not os.path.exists(model_path):
+        os.makedirs(model_path)
+    wrapper_fit_all(d_train, d_test, model_path)
+    logger.info("done")
 
 
 if __name__ == "__main__":
@@ -261,8 +329,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "-t", "--test-scenario", help="testing for code running", action="store_true")
     parser.add_argument(
-        "-r", "--report-path", help="path for saving report model performance", default="reports", required=True)
+        "-r", "--report-path",
+        help="path for saving report model performance", default="reports", required=True)
     parser.add_argument(
         "--model-path", help="model path for vectorizer and model", default="models", required=True)
     args = parser.parse_args()
+    logger = log(path="logs/", file="bert_inference.logs")
     main(args.data_path, args.test_scenario, args.report_path, args.model_path)
