@@ -1,3 +1,4 @@
+"""Create Word Embedding using Word2Vec."""
 import argparse
 import multiprocessing
 import time
@@ -13,7 +14,14 @@ from LogWatcher import log
 nltk.download('punkt')
 
 
-def combine_all_questions(dt):
+def combine_all_questions(dt: pd.DataFrame) -> list:
+    """Combine question1 and question2 data.
+
+    Args:
+        dt: dataset
+    Returns:
+        questions: combined of question1 and question2
+    """
     clean_q1 = dt['clean_question1'].values
     clean_q2 = dt['clean_question2'].values
 
@@ -22,7 +30,8 @@ def combine_all_questions(dt):
     return questions
 
 
-def tokenizer(questions):
+def tokenizer(questions: list) -> list:
+    """Tokenize each question sentence."""
     sentences = [sent_tokenize(str(text)) for text in questions]
     sentences = [sent[0].split() for sent in sentences]
     return sentences
@@ -56,6 +65,43 @@ class callback(CallbackAny2Vec):
         self.epoch += 1
 
 
+def main(clean_data):
+    """Run all process."""
+    cores = multiprocessing.cpu_count()
+    data = pd.read_csv(clean_data)
+    logger.info("Combine question1 and question2")
+    questions = combine_all_questions(data)
+    logger.info("Tokenize all sentences")
+    sent = tokenizer(questions)
+
+    logger.info("Initialize Word2Vec Class")
+    w2v_model = Word2Vec(min_count=2,
+                         window=5,
+                         size=300,
+                         sg=1,  # if 1, then skipgram is used; if 0, then cbow
+                         workers=cores)
+
+    logger.info("Build Vocabulary")
+    w2v_model.build_vocab(sent)
+    logger.info("Train Word2Vec model")
+    w2v_model.train(sentences=sent,
+                    total_examples=w2v_model.corpus_count,
+                    epochs=20,
+                    report_delay=1,
+                    compute_loss=True,  # set compute_loss = True
+                    callbacks=[callback()])  # add the callback class
+
+    logger.info("Save word embedding pickle")
+    w2v = dict(zip(w2v_model.wv.index2word, w2v_model.wv.vectors))
+    with open("model/w2v_embed.pkl", "wb") as file:
+        pickle.dump(w2v, file)
+
+    logger.info("Save Word2Vec model")
+    w2v_model.save('model/word2vec.model')
+
+    w2v_model.wv.most_similar(['dog'])
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--clean_data', type=str,
@@ -64,37 +110,4 @@ if __name__ == '__main__':
 
     logger = log(path="logs/", file="word2vec.logs")
 
-    cores = multiprocessing.cpu_count()
-
-    data = pd.read_csv(opt.clean_data)
-    questions = combine_all_questions(data)
-    sent = tokenizer(questions)
-
-    # init word2vec class
-    w2v_model = Word2Vec(min_count=2,
-                         window=5,
-                         size=300,
-                         sg=1,  # if 1, then skipgram is used; if 0, then cbow
-                         workers=cores)
-
-    # build vovab
-    w2v_model.build_vocab(sent)
-
-    # train the w2v model
-    w2v_model.train(sentences=sent,
-                    total_examples=w2v_model.corpus_count,
-                    epochs=20,
-                    report_delay=1,
-                    compute_loss=True,  # set compute_loss = True
-                    callbacks=[callback()])  # add the callback class
-
-    w2v = dict(zip(w2v_model.wv.index2word, w2v_model.wv.vectors))
-    with open("model/w2v_embed.pkl", "wb") as file:
-        pickle.dump(w2v, file)
-
-    w2v_model.save('model/word2vec.model')
-
-    w2v_model.wv.most_similar(['dog'])
-    # print(w2v_model.wv['dog']) # get the word vector of 'dog'
-    # print(w2v_model.wv.index2word) # get the vocabularies
-    # print(w2v_model.wv.vectors) # get all word vectors
+    main(opt.clean_data)
