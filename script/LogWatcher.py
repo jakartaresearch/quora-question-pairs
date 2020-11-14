@@ -1,13 +1,14 @@
 import logging
 import os
 
+
 def log(path, file):
-    """[Create a log file to record the experiment's logs]
-    
+    """[Create a log file to record the experiment's logs].
+
     Arguments:
         path {string} -- path to the directory
         file {string} -- file name
-    
+
     Returns:
         [obj] -- [logger that record logs]
     """
@@ -19,21 +20,20 @@ def log(path, file):
     if not os.path.isfile(log_file):
         open(log_file, "w+").close()
 
-    console_logging_format = "%(asctime)s %(filename)s:%(lineno)d %(message)s"
-    file_logging_format = "%(asctime)s %(filename)s:%(lineno)d %(message)s"
+    logging_format = "%(asctime)s %(filename)s:%(lineno)d %(message)s"
 
     # configure logger
-    logging.basicConfig(level=logging.INFO, format=console_logging_format)
+    logging.basicConfig(level=logging.DEBUG, format=logging_format)
     logger = logging.getLogger()
-    
+
     # create a file handler for output file
     handler = logging.FileHandler(log_file)
 
     # set the logging level for log file
-    handler.setLevel(logging.INFO)
-    
+    handler.setLevel(logging.DEBUG)
+
     # create a logging format
-    formatter = logging.Formatter(file_logging_format)
+    formatter = logging.Formatter(logging_format)
     handler.setFormatter(formatter)
 
     # add the handlers to the logger
