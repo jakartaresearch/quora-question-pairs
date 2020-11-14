@@ -316,6 +316,8 @@ def main(split_folders, test_scenario, report_path, model_path):
         f'{report_path}/{today}_reports.pkl', 'wb'))
 
     # fit all data to the model
+    if not os.path.exists(model_path):
+        os.makedirs(model_path)
     wrapper_fit_all(d_train, d_test, model_path)
     logger.info("done")
 
