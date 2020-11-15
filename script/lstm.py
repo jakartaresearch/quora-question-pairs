@@ -2,7 +2,7 @@
 import os
 import glob
 import time
-import pickle
+import argparse
 import pandas as pd
 from tokenizers import BertWordPieceTokenizer
 import torch
@@ -13,6 +13,8 @@ from torch.nn.utils.rnn import pad_sequence
 
 
 class DatasetPairs(Dataset):
+    """Dataset Class."""
+
     def __init__(self, cross_val_paths, model_path):
         self.dataset = self.read_dataset(cross_val_paths)
         self.split_dict = self.get_id_cross_val(cross_val_paths)
@@ -136,27 +138,21 @@ def padding(data):
     return x_pad, y_pad
 
 
-def main():
+def main(args):
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    cross_path = '../data/cross_validation_data'
-    model_path = '../data/bert-case'
-
-    dataset = DatasetPairs(cross_path, model_path)
+    dataset = DatasetPairs(args.cross_path, args.tokenizer_path)
 
     num_vocab = dataset.tokenizer.get_vocab_size()
-    emb_size = 512
-    hid_size = 512
-    num_class = 2
-    batchsize = 256
 
-    model = QuoraClassifier(num_vocab, emb_size, hid_size, num_class)
+    model = QuoraClassifier(num_vocab, args.emb_size,
+                            args.hid_size, args.num_class)
     model = model.to(device)
 
     parameters = sum(p.numel() for p in model.parameters())
     print(f'model has {parameters:,} trainable parameters')
 
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
 
     history = {"running_loss": [], "running_loss_v": [],
@@ -173,7 +169,7 @@ def main():
 
         dataset.set_split("train")
         data_gen = DataLoader(
-            dataset, batch_size=batchsize, collate_fn=padding)
+            dataset, batch_size=args.batch_size, collate_fn=padding)
         model.train()
         for batch_index, (x, y) in enumerate(data_gen, 1):
             optimizer.zero_grad()
@@ -194,7 +190,7 @@ def main():
 
         dataset.set_split("test")
         data_gen = DataLoader(
-            dataset, batch_size=batchsize, collate_fn=padding)
+            dataset, batch_size=args.batch_size, collate_fn=padding)
         model.eval()
         for batch_index, (x, y) in enumerate(data_gen, 1):
             x = x.to(device)
@@ -225,5 +221,22 @@ def main():
 
 
 if __name__ == "__main__":
-
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--cross-path", help="cross validation data path", required=True)
+    parser.add_argument(
+        "--tokenizer-path", help="tokenizer path using tokenizers", required=True)
+    parser.add_argument(
+        "--emb-size", help="embedding size for embedding layer", default=512, type=int)
+    parser.add_argument(
+        "--hid-size", help="hidden size in lstm", default=512, type=int)
+    parser.add_argument(
+        "--num-class", help="number of class target", default=2, type=int)
+    parser.add_argument(
+        "--batch-size", help="number of batch size", default=256, type=int)
+    parser.add_argument(
+        "--lr", help="learning rate for adam optimizer", default=0.001, type=int)
+    parser.add_argument(
+        "--report-path", help="path for train test loss and accuracy to save", default="reports")
+    args = parser.parse_args()
+    main(args)
