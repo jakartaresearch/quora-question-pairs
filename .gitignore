@@ -3,6 +3,10 @@
 *.tsv
 *.rar
 *.logs
+.vscode/
 .ipynb_checkpoints/
+catboost_info/
 notebook/__pycache__/
 notebook/catboost_info/
+data/bert-case/
+data/resources
