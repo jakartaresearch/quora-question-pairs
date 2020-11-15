@@ -6,6 +6,7 @@ import pandas as pd
 
 def read_csv(path):
     """Read file csv.
+
     Args:
         path (str): path file
     Returns:

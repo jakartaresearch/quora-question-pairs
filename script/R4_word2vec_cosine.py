@@ -48,7 +48,6 @@ def question_similarity(row, weights) -> float:
     Returns:
         sim: cosine similarity between 0 to 1
     """
-
     q1_weight, q2_weight = [], []
 
     q1 = row['clean_question1']
