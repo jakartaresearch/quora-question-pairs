@@ -187,6 +187,7 @@ def main(args):
 
             loss.backward()
             optimizer.step()
+            break
 
         dataset.set_split("test")
         data_gen = DataLoader(
@@ -204,6 +205,7 @@ def main(args):
 
             accuracy = compute_accuracy(y, out)
             running_accu_v += (accuracy - running_accu_v) / batch_index
+            break
 
         end = time.time()
         m, s = compute_time(start, end)
@@ -213,7 +215,7 @@ def main(args):
             f'\ttrain loss: {running_loss:.2f} | train accuracy: {running_accu:.2f}')
         print(
             f'\tval loss: {running_loss_v:.2f} | val accuracy: {running_accu_v:.2f}')
-
+        break
     history["running_loss"].append(running_loss)
     history["running_loss_v"].append(running_loss_v)
     history["running_accu"].append(running_accu)
