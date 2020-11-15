@@ -4,7 +4,6 @@ import argparse
 import time
 import datetime
 import warnings
-from typing import Tuple
 import pandas as pd
 import numpy as np
 import torch
@@ -46,7 +45,7 @@ class Dataset():
         raw_val = raw_val.sample(frac=1, random_state=42)
         return raw_train, raw_val
 
-    def data_preprocessing(self, raw_train, raw_val) -> Tuple[dict, dict, torch]:
+    def data_preprocessing(self, raw_train, raw_val) -> tuple:
         """Data Preprocessing(tokenize, add special tokens, padding, attention mask).
 
         Args:
@@ -272,7 +271,7 @@ def format_time(elapsed):
     return str(datetime.timedelta(seconds=elapsed_rounded))
 
 
-def main(dataset_path, kfold_data_path, epochs, batch_size):
+def main(dataset_path, kfold_data_path, epochs, batch_size, model_path):
     """Run all process."""
     quora_dataset = Dataset(dataset_path, kfold_data_path)
     model, optimizer = bert_config()
@@ -325,12 +324,11 @@ def main(dataset_path, kfold_data_path, epochs, batch_size):
     df_stats.to_csv('training_stats.csv')
 
     # Save model
-    output_dir = 'model/'
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    if not os.path.exists(model_path):
+        os.mkdir(model_path)
     model_to_save = model.module if hasattr(model, 'module') else model
-    model_to_save.save_pretrained(output_dir)
-    quora_dataset.tokenizer.save_pretrained(output_dir)
+    model_to_save.save_pretrained(model_path)
+    quora_dataset.tokenizer.save_pretrained(model_path)
 
 
 if __name__ == '__main__':
@@ -339,6 +337,7 @@ if __name__ == '__main__':
                         default='../data/quora_duplicate_questions.tsv')
     parser.add_argument('--kfold_data_path', type=str,
                         default='../data/cross_validation_data/1')
+    parser.add_argument('--model_path', type=str, default='model/')
     parser.add_argument('--epochs', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=32)
     opt = parser.parse_args()
@@ -347,6 +346,6 @@ if __name__ == '__main__':
 
     device_type = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(device_type)
-    logger.DEBUG(device)
+    logger.debug(device)
 
-    main(opt.dataset_path, opt.kfold_data_path, opt.epochs, opt.batch_size)
+    main(opt.dataset_path, opt.kfold_data_path, opt.epochs, opt.batch_size, opt.model_path)

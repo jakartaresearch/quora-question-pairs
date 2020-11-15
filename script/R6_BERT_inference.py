@@ -154,6 +154,6 @@ if __name__ == '__main__':
 
     device_type = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(device_type)
-    logger.DEBUG(device)
+    logger.debug(device)
 
     main(opt.model_path, opt.test_data, opt.batch_size)
