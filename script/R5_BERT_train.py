@@ -1,23 +1,22 @@
+"""BERT Training script."""
 import os
 import argparse
-import pandas as pd
-import numpy as np
-import torch
 import time
 import datetime
 import warnings
+from typing import Tuple
 import pandas as pd
-warnings.filterwarnings("ignore")
+import numpy as np
+import torch
 
-from sklearn.metrics import f1_score, precision_score, recall_score
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import BertForSequenceClassification, AdamW, BertConfig, BertTokenizer
-from transformers import get_linear_schedule_with_warmup
-from LogWatcher import log
 from tqdm import tqdm
+from LogWatcher import log
+from transformers import get_linear_schedule_with_warmup
+from transformers import BertForSequenceClassification, AdamW, BertTokenizer
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from sklearn.metrics import f1_score, precision_score, recall_score
 
-device_type = "cuda" if torch.cuda.is_available() else "cpu"
-device = torch.device(device_type)
+warnings.filterwarnings("ignore")
 
 
 class Dataset():
@@ -47,7 +46,23 @@ class Dataset():
         raw_val = raw_val.sample(frac=1, random_state=42)
         return raw_train, raw_val
 
-    def data_preprocessing(self, raw_train, raw_val):
+    def data_preprocessing(self, raw_train, raw_val) -> Tuple[dict, dict, torch]:
+        """Data Preprocessing(tokenize, add special tokens, padding, attention mask).
+
+        Args:
+            raw_train: raw training data
+            raw_val: raw validation data
+
+        Returns:
+            train (dict): input_ids, token_type_ids, attention_mask, labels
+            val (dict): input_ids, token_type_ids, attention_mask, labels
+            tokenizer: BERT tokenizer model
+
+            input_ids: List of token ids to be fed to a model
+            token_type_ids: List of token type ids to be fed to a model
+            attention_masks: List of indices specifying which tokens should be attended to by the model
+            labels: target
+        """
         logger.info("Data Preprocessing")
         tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         data = [raw_train, raw_val]
@@ -84,6 +99,7 @@ class Dataset():
 
 
 def bert_config():
+    """Download, Setup BERT pretrained model and setup AdamW optimizer."""
     logger.info("Get BERT pretrained model")
     bert_model = BertForSequenceClassification.from_pretrained(
         'bert-base-cased',
@@ -100,23 +116,26 @@ def bert_config():
     return bert_model, bert_optimizer
 
 
-def create_data_loader(train, val):
+def create_data_loader(train, val, batch_size):
+    """Create data loader for training and validation data."""
     logger.info("Create Data Loader")
     t_input_ids, t_token_type_ids, t_attention_mask, t_labels = train.values()
     train_dataset = TensorDataset(t_input_ids, t_token_type_ids,
                                   t_attention_mask, t_labels)
 
     train_data_loader = DataLoader(train_dataset, sampler=RandomSampler(train_dataset),
-                                   batch_size=opt.batch_size)
+                                   batch_size=batch_size)
 
     v_input_ids, v_token_type_ids, v_attention_mask, v_labels = val.values()
     val_dataset = TensorDataset(v_input_ids, v_token_type_ids,
                                 v_attention_mask, v_labels)
     val_data_loader = DataLoader(val_dataset, sampler=SequentialSampler(val_dataset),
-                                 batch_size=opt.batch_size)
+                                 batch_size=batch_size)
     return train_data_loader, val_data_loader
 
-def training(train_dataloader):
+
+def training(train_dataloader, model, optimizer, scheduler):
+    """Training process."""
     t0 = time.time()
     total_train_loss = 0
     total_train_accuracy = 0
@@ -177,7 +196,8 @@ def training(train_dataloader):
     return avg_train_loss, avg_train_accuracy, avg_train_f1, avg_train_prec, avg_train_rec, training_time
 
 
-def validation(val_dataloader):
+def validation(val_dataloader, model):
+    """Validate process."""
     logger.info("Validation...")
     t0 = time.time()
     model.eval()
@@ -235,51 +255,46 @@ def validation(val_dataloader):
     logger.info("Average rec: {0:.2f}".format(avg_val_rec))
     logger.info("Validation took: {:}".format(validation_time))
     return avg_val_loss, avg_val_accuracy, avg_val_f1, avg_val_prec, avg_val_rec, validation_time
-    
+
 
 def flat_accuracy(preds, labels):
+    """Calculate accuracy in numpy CPU."""
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
 
 
 def format_time(elapsed):
+    """Format time."""
     # Round to the nearest second.
     elapsed_rounded = int(round((elapsed)))
     # Format as hh:mm:ss
     return str(datetime.timedelta(seconds=elapsed_rounded))
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_path', type=str,
-                        default='../data/quora_duplicate_questions.tsv')
-    parser.add_argument('--kfold_data_path', type=str,
-                        default='../data/cross_validation_data/1')
-    parser.add_argument('--epochs', type=int, default=3)
-    parser.add_argument('--batch_size', type=int, default=32)
-    opt = parser.parse_args()
-    
-    logger = log(path="logs/", file="bert_train.logs")
-
-    quora_dataset = Dataset(opt.dataset_path, opt.kfold_data_path)
+def main(dataset_path, kfold_data_path, epochs, batch_size):
+    """Run all process."""
+    quora_dataset = Dataset(dataset_path, kfold_data_path)
     model, optimizer = bert_config()
     train_dataloader, val_dataloader = create_data_loader(quora_dataset.train,
-                                                          quora_dataset.val)
-    
-    total_steps = len(train_dataloader) * opt.epochs
+                                                          quora_dataset.val, batch_size)
+
+    total_steps = len(train_dataloader) * epochs
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0,
                                                 num_training_steps=total_steps)
 
     training_stats = []
     total_t0 = time.time()
 
-    for epoch_i in range(0, opt.epochs):
-        logger.info('==== Epoch {:} / {:} ===='.format(epoch_i + 1, opt.epochs))
-        
-        train_loss, train_accu, train_f1, train_prec, train_rec, training_time = training(train_dataloader)
-        val_loss, val_accu, val_f1, val_prec, val_rec, validation_time = validation(val_dataloader)
-        
+    for epoch_i in range(0, epochs):
+        logger.info(
+            '==== Epoch {:} / {:} ===='.format(epoch_i + 1, epochs))
+
+        train_loss, train_accu, train_f1, train_prec, train_rec, training_time = training(
+            train_dataloader, model, optimizer, scheduler)
+        val_loss, val_accu, val_f1, val_prec, val_rec, validation_time = validation(
+            val_dataloader, model)
+
         # Record all statistics from this epoch.
         training_stats.append(
             {
@@ -301,17 +316,37 @@ if __name__ == '__main__':
         )
 
     logger.info("Training complete!")
-    logger.info("Total training took {:} (h:mm:ss)".format(format_time(time.time()-total_t0)))
-    
+    logger.info("Total training took {:} (h:mm:ss)".format(
+        format_time(time.time()-total_t0)))
+
     # Create a DataFrame from our training statistics.
     df_stats = pd.DataFrame(data=training_stats)
     df_stats = df_stats.set_index('Epoch')
     df_stats.to_csv('training_stats.csv')
-    
-    #Save model
+
+    # Save model
     output_dir = 'model/'
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir) 
+        os.mkdir(output_dir)
     model_to_save = model.module if hasattr(model, 'module') else model
     model_to_save.save_pretrained(output_dir)
     quora_dataset.tokenizer.save_pretrained(output_dir)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset_path', type=str,
+                        default='../data/quora_duplicate_questions.tsv')
+    parser.add_argument('--kfold_data_path', type=str,
+                        default='../data/cross_validation_data/1')
+    parser.add_argument('--epochs', type=int, default=3)
+    parser.add_argument('--batch_size', type=int, default=32)
+    opt = parser.parse_args()
+
+    logger = log(path="logs/", file="bert_train.log")
+
+    device_type = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device(device_type)
+    logger.DEBUG(device)
+
+    main(opt.dataset_path, opt.kfold_data_path, opt.epochs, opt.batch_size)
