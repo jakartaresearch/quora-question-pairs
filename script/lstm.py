@@ -2,6 +2,7 @@
 import os
 import glob
 import time
+import pickle
 import argparse
 import pandas as pd
 from tokenizers import BertWordPieceTokenizer
@@ -139,8 +140,20 @@ def padding(data):
     return x_pad, y_pad
 
 
+def save_report(data, path):
+    with open(path, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def save_model(model, path):
+    torch.save(model.state_dict(), path)
+
+
 def main(args):
     logger.info("Start running...")
+
+    MODEL_PATH = os.path.join(args.model_path, "bi_lstm.pth")
+    REPORT_PATH = os.path.join(args.report_path, "bi_lstm.pkl")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     logger.debug(f"Running on {device}")
@@ -196,7 +209,6 @@ def main(args):
 
             loss.backward()
             optimizer.step()
-            break
 
         dataset.set_split("test")
         data_gen = DataLoader(
@@ -214,7 +226,6 @@ def main(args):
 
             accuracy = compute_accuracy(y, out)
             running_accu_v += (accuracy - running_accu_v) / batch_index
-            break
 
         end = time.time()
         m, s = compute_time(start, end)
@@ -224,11 +235,18 @@ def main(args):
             f'\ttrain loss: {running_loss:.2f} | train accuracy: {running_accu:.2f}')
         logger.info(
             f'\tval loss: {running_loss_v:.2f} | val accuracy: {running_accu_v:.2f}')
-        break
+
     history["running_loss"].append(running_loss)
     history["running_loss_v"].append(running_loss_v)
     history["running_accu"].append(running_accu)
     history["running_accu_v"].append(running_accu_v)
+
+    logger.debug(f"save to {REPORT_PATH}")
+    save_report(history, os.path.join(REPORT_PATH))
+    logger.info("save report done")
+    logger.debug(f"save to {MODEL_PATH}")
+    save_model(model, MODEL_PATH)
+    logger.info("save mdoel done")
 
 
 if __name__ == "__main__":
@@ -249,6 +267,9 @@ if __name__ == "__main__":
         "--lr", help="learning rate for adam optimizer", default=0.001, type=int)
     parser.add_argument(
         "--report-path", help="path for train test loss and accuracy to save", default="reports")
+    parser.add_argument(
+        "--model-path", help="model path", default="models")
     args = parser.parse_args()
+
     logger = log(path="logs/", file="lstm.log")
     main(args)

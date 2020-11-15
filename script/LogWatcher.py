@@ -17,17 +17,14 @@ def log(path, file):
     # check if the file exist
     log_file = os.path.join(path, file)
 
-    if not os.path.isfile(log_file):
-        open(log_file, "w+").close()
-
-    logging_format = "%(asctime)s %(filename)s:%(lineno)d %(message)s"
+    logging_format = "%(asctime)s %(filename)s:%(lineno)d %(levelname)s %(message)s"
 
     # configure logger
     logging.basicConfig(level=logging.DEBUG, format=logging_format)
     logger = logging.getLogger()
 
     # create a file handler for output file
-    handler = logging.FileHandler(log_file)
+    handler = logging.FileHandler(log_file, 'w')
 
     # set the logging level for log file
     handler.setLevel(logging.DEBUG)
