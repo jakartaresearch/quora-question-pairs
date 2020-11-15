@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence
+from LogWatcher import log
 
 
 class DatasetPairs(Dataset):
@@ -139,25 +140,33 @@ def padding(data):
 
 
 def main(args):
+    logger.info("Start running...")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.debug(f"Running on {device}")
+
     dataset = DatasetPairs(args.cross_path, args.tokenizer_path)
+    logger.info("dataset class created successfully")
 
     num_vocab = dataset.tokenizer.get_vocab_size()
+    logger.debug(f"number of vocab {num_vocab}")
 
     model = QuoraClassifier(num_vocab, args.emb_size,
                             args.hid_size, args.num_class)
+    logger.info("model class created successfully")
     model = model.to(device)
 
     parameters = sum(p.numel() for p in model.parameters())
-    print(f'model has {parameters:,} trainable parameters')
+    logger.info(f'model has {parameters:,} trainable parameters')
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     criterion = nn.CrossEntropyLoss()
+    logger.debug(f"learning rate set to {args.lr}")
 
     history = {"running_loss": [], "running_loss_v": [],
                "running_accu": [], "running_accu_v": []}
 
+    logger.info("start training...")
     for epoch in range(1, 101):
 
         running_loss = 0
@@ -210,10 +219,10 @@ def main(args):
         end = time.time()
         m, s = compute_time(start, end)
 
-        print(f'{epoch} | {m}m {s}s')
-        print(
+        logger.info(f"{epoch} | {m}m {s}s")
+        logger.info(
             f'\ttrain loss: {running_loss:.2f} | train accuracy: {running_accu:.2f}')
-        print(
+        logger.info(
             f'\tval loss: {running_loss_v:.2f} | val accuracy: {running_accu_v:.2f}')
         break
     history["running_loss"].append(running_loss)
@@ -241,4 +250,5 @@ if __name__ == "__main__":
     parser.add_argument(
         "--report-path", help="path for train test loss and accuracy to save", default="reports")
     args = parser.parse_args()
+    logger = log(path="logs/", file="lstm.log")
     main(args)

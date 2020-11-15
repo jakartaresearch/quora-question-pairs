@@ -334,5 +334,5 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model-path", help="model path for vectorizer and model", default="models", required=True)
     args = parser.parse_args()
-    logger = log(path="logs/", file="bert_inference.logs")
+    logger = log(path="logs/", file="bert_inference.log")
     main(args.data_path, args.test_scenario, args.report_path, args.model_path)
