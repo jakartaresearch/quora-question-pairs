@@ -69,6 +69,7 @@ def question_similarity(row, weights) -> float:
 
 
 def main(clean_data: str, kfold_data: str, word_embed: str):
+    """Run all process."""
     data = pd.read_csv(clean_data)
     data = remove_row_nan(data)
 
@@ -140,5 +141,5 @@ if __name__ == '__main__':
                         default='../model/w2v_embed.pkl')
     opt = parser.parse_args()
 
-    logger = log(path="logs/", file="word2vec_cosine.logs")
+    logger = log(path="logs/", file="word2vec_cosine.log")
     main(opt.clean_data, opt.kfold_data, opt.word_embed)

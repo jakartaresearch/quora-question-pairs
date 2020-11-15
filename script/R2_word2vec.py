@@ -108,6 +108,6 @@ if __name__ == '__main__':
                         default='')
     opt = parser.parse_args()
 
-    logger = log(path="logs/", file="word2vec.logs")
+    logger = log(path="logs/", file="word2vec.log")
 
     main(opt.clean_data)
