@@ -2,11 +2,11 @@
 *.csv
 *.tsv
 *.rar
-*.logs
 .vscode/
-.ipynb_checkpoints/
+__pycache__
+logs/
+.ipynb_checkpoints
 catboost_info/
-notebook/__pycache__/
-notebook/catboost_info/
+catboost_info
 data/bert-case/
 data/resources
