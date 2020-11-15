@@ -8,8 +8,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, precision_score, accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 from LogWatcher import log
-from tqdm import tqdm_notebook, tqdm
-tqdm_notebook().pandas()
+from tqdm import tqdm, tqdm_notebook
+tqdm.pandas(tqdm_notebook)
 
 
 def remove_row_nan(df: pd.DataFrame) -> pd.DataFrame:
@@ -83,8 +83,8 @@ def main(clean_data: str, kfold_data: str, word_embed: str):
     val_id_file = '/val_id.csv'
 
     for kf, path in enumerate(kfold_folder, 1):
-        logger.info('Load KFold data from = %s', path)
         logger.info('KFold -%s', kf)
+        logger.info('Load KFold data from = %s', path)
         train_id = pd.read_csv(path + train_id_file)
         val_id = pd.read_csv(path + val_id_file)
 
@@ -97,21 +97,27 @@ def main(clean_data: str, kfold_data: str, word_embed: str):
         val = val.sample(frac=1, random_state=42)
 
         # calculate cosine similarity
-        logger.info('calculate cosine similarity')
-        x_train = train.progress_apply(
-            question_similarity, args=(weights), axis=1)
-        x_val = val.progress_apply(question_similarity, args=(weights), axis=1)
+        logger.info('Calculate Cosine Similarity')
+        x_train, x_val = [], []
+        logger.info('On Training data')
+        for index, row in tqdm(train.iterrows()):
+            x_train.append(question_similarity(row, weights))
+        logger.info('On Validation data')
+        for index, row in tqdm(val.iterrows()):
+            x_val.append(question_similarity(row, weights))
 
         # Prepare train, val data
-        x_train = x_train.values.reshape(-1, 1)
-        x_val = x_val.values.reshape(-1, 1)
+        x_train = np.asarray(x_train).reshape(-1, 1)
+        x_val = np.asarray(x_val).reshape(-1, 1)
         y_train = train.is_duplicate.values
         y_val = val.is_duplicate.values
 
         # Classifier
+        logger.info('Fit Logistic Regression model')
         clf = LogisticRegression()
         clf.fit(x_train, y_train)
         # Prediction
+        logger.info('Prediction')
         y_pred = clf.predict(x_val)
         # Calculate accuracy
         accuracy = accuracy_score(y_val, y_pred)
@@ -124,7 +130,10 @@ def main(clean_data: str, kfold_data: str, word_embed: str):
         total_acc.append(accuracy)
         total_f1.append(f1)
         total_prec.append(prec)
-
+        logger.info('--------------------------------')
+    
+    logger.info('==================================')
+    logger.info('Performance')
     logger.info('Accuracy: %s', sum(total_acc)/5)
     logger.info('F1: %s', sum(total_f1)/5)
     logger.info('Precision: %s', sum(total_prec)/5)
@@ -133,11 +142,11 @@ def main(clean_data: str, kfold_data: str, word_embed: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--clean_data', type=str,
-                        default='')
+                        default='../data/clean_quora_duplicate_questions.csv')
     parser.add_argument('--kfold_data', type=str,
                         default='../data/cross_validation_data')
     parser.add_argument('--word_embed', type=str,
-                        default='../model/w2v_embed.pkl')
+                        default='model/w2v_embed.pkl')
     opt = parser.parse_args()
 
     logger = log(path="logs/", file="word2vec_cosine.log")
