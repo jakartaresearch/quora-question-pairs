@@ -45,7 +45,7 @@ class callback(CallbackAny2Vec):
         self.start_time = 0
         self.loss_previous_step = 0
 
-    def on_epoch_begin(self):
+    def on_epoch_begin(self, model):
         print("Epoch #{} start".format(self.epoch))
         self.start_time = time.time()
 
@@ -65,7 +65,7 @@ class callback(CallbackAny2Vec):
         self.epoch += 1
 
 
-def main(clean_data):
+def main(clean_data, model_path):
     """Run all process."""
     cores = multiprocessing.cpu_count()
     data = pd.read_csv(clean_data)
@@ -93,11 +93,11 @@ def main(clean_data):
 
     logger.info("Save word embedding pickle")
     w2v = dict(zip(w2v_model.wv.index2word, w2v_model.wv.vectors))
-    with open("model/w2v_embed.pkl", "wb") as file:
+    with open(model_path+'w2v_embed.pkl', 'wb') as file:
         pickle.dump(w2v, file)
 
     logger.info("Save Word2Vec model")
-    w2v_model.save('model/word2vec.model')
+    w2v_model.save(model_path+'word2vec.model')
 
     w2v_model.wv.most_similar(['dog'])
 
@@ -105,9 +105,10 @@ def main(clean_data):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--clean_data', type=str,
-                        default='')
+                        default='../data/clean_quora_duplicate_questions.csv')
+    parser.add_argument('--model_path', type=str, default='model/')
     opt = parser.parse_args()
 
     logger = log(path="logs/", file="word2vec.log")
 
-    main(opt.clean_data)
+    main(opt.clean_data, opt.model_path)
