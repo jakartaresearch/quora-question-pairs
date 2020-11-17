@@ -1,4 +1,4 @@
-"""Modelling use word2vec and cosine similarity."""
+"""Modelling use word2vec embedding, cosine similarity and logistic regression."""
 import argparse
 import pickle
 import glob
@@ -131,7 +131,7 @@ def main(clean_data: str, kfold_data: str, word_embed: str):
         total_f1.append(f1)
         total_prec.append(prec)
         logger.info('--------------------------------')
-    
+
     logger.info('==================================')
     logger.info('Performance')
     logger.info('Accuracy: %s', sum(total_acc)/5)
