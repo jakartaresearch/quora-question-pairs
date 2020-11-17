@@ -3,6 +3,7 @@ import os
 import argparse
 from joblib import load
 import numpy as np
+from utils import decode_label
 from ensemble_train import clean_text, concat
 from LogWatcher import log
 
@@ -13,14 +14,6 @@ def load_model(model_path):
         return model
     else:
         ValueError("model not found")
-
-
-def decode_label(y_pred):
-    label = y_pred[0].astype(int)
-    if label == 0:
-        return "not duplicate"
-    else:
-        return "duplicate"
 
 
 def main(model_path, q1, q2):
