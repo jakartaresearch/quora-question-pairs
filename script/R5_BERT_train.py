@@ -348,4 +348,5 @@ if __name__ == '__main__':
     device = torch.device(device_type)
     logger.debug(device)
 
-    main(opt.dataset_path, opt.kfold_data_path, opt.epochs, opt.batch_size, opt.model_path)
+    main(opt.dataset_path, opt.kfold_data_path,
+         opt.epochs, opt.batch_size, opt.model_path)

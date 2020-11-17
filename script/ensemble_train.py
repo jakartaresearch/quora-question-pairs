@@ -91,7 +91,7 @@ def transform(train, test, vectorizer):
     train_feat = vec.fit_transform(train)
     test_feat = vec.transform(test)
 
-    return (vec, train_feat, test_feat)
+    return (train_feat, test_feat)
 
 
 def concat(q1, q2):
@@ -180,7 +180,7 @@ def model_wrapper(x_train, x_test, y_train, y_test, split_index, feat):
 
 
 def fit_model_all(d_train, d_test, algo, extranction):
-    """Fitting all the data to the model 
+    """Fitting all the data to the model.
 
     Args:
         X (array): data input
@@ -280,9 +280,9 @@ def main(split_folders, test_scenario, report_path, model_path):
 
         # transformation step
         logger.info("step 4/7 :transforming cv")
-        cv_q1, x_train_q1, x_test_q1 = transform(
+        x_train_q1, x_test_q1 = transform(
             d_train.q1_clean, d_test.q1_clean, CountVectorizer)
-        cv_q2, x_train_q2, x_test_q2 = transform(
+        x_train_q2, x_test_q2 = transform(
             d_train.q2_clean, d_test.q2_clean, CountVectorizer)
 
         x_train = concat(x_train_q1, x_train_q2)
@@ -296,9 +296,9 @@ def main(split_folders, test_scenario, report_path, model_path):
         score_list.extend(scores)
 
         logger.info("step 6/7 :transforming tfidf")
-        cv_q1, x_train_q1, x_test_q1 = transform(
+        x_train_q1, x_test_q1 = transform(
             d_train.q1_clean, d_test.q1_clean, TfidfVectorizer)
-        cv_q2, x_train_q2, x_test_q2 = transform(
+        x_train_q2, x_test_q2 = transform(
             d_train.q2_clean, d_test.q2_clean, TfidfVectorizer)
 
         x_train = concat(x_train_q1, x_train_q2)
