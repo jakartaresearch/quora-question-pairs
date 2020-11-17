@@ -80,9 +80,9 @@ def flat_accuracy(preds, labels):
 def main(model_path, test_data, batch_size):
     """Run all process."""
     # Load a trained model and vocabulary that you have fine-tuned
-    logger.info('Get BERT pretrained model')
+    logger.info('Load BERT pretrained model')
     model = BertForSequenceClassification.from_pretrained(model_path)
-    logger.info('Get BERT tokenizer')
+    logger.info('Load BERT tokenizer')
     tokenizer = BertTokenizer.from_pretrained(model_path)
 
     model.to(device)
@@ -142,11 +142,11 @@ def main(model_path, test_data, batch_size):
 
 
 def single_infer(model_path, question1, question2):
-    """Run all process."""
+    """Run single inference."""
     # Load a trained model and vocabulary that you have fine-tuned
-    logger.info('Get BERT pretrained model')
+    logger.info('Load BERT model')
     model = BertForSequenceClassification.from_pretrained(model_path)
-    logger.info('Get BERT tokenizer')
+    logger.info('Load BERT tokenizer')
     tokenizer = BertTokenizer.from_pretrained(model_path)
     model.to(device)
 
@@ -166,9 +166,18 @@ def single_infer(model_path, question1, question2):
     logger.info('Predicting labels...')
     model.eval()
     with torch.no_grad():
-        loss, logits = model(input_id, token_type_ids=token_type_id,
-                             attention_mask=attention_mask)
-    print("Result Prediction: ", logits)
+        logits = model(input_id, token_type_ids=token_type_id,
+                       attention_mask=attention_mask)
+    
+    logits = logits[0].detach().cpu().numpy()
+    pred = np.argmax(logits, axis=1).flatten()
+    
+    if pred[0] == 1 : 
+        pred_label = 'duplicate'
+    else:
+        pred_label = 'not_duplicate'
+        
+    print("Result Prediction: ", pred_label)
 
 
 if __name__ == '__main__':
