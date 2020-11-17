@@ -20,7 +20,7 @@ def data_preprocessing(test_data: str, tokenizer) -> torch:
 
     Returns:
         input_ids: List of token ids to be fed to a model
-        token_type_ids: List of token type ids to be fed to a model 
+        token_type_ids: List of token type ids to be fed to a model
         attention_masks: List of indices specifying which tokens should be attended to by the model
         labels: target
     """
@@ -53,7 +53,7 @@ def data_loader(input_ids, token_type_ids, attention_masks, labels, batch_size) 
 
     Args:
         input_ids: List of token ids to be fed to a model.
-        token_type_ids: List of token type ids to be fed to a model 
+        token_type_ids: List of token type ids to be fed to a model
         attention_masks: List of indices specifying which tokens should be attended to by the model
         labels: Target
         batch_size
@@ -141,10 +141,42 @@ def main(model_path, test_data, batch_size):
     logger.info("Average rec: {0:.4f}".format(avg_test_rec*100))
 
 
+def single_infer(model_path, question1, question2):
+    """Run all process."""
+    # Load a trained model and vocabulary that you have fine-tuned
+    logger.info('Get BERT pretrained model')
+    model = BertForSequenceClassification.from_pretrained(model_path)
+    logger.info('Get BERT tokenizer')
+    tokenizer = BertTokenizer.from_pretrained(model_path)
+    model.to(device)
+
+    logger.info("Data Preprocessing")
+    encoded_dict = tokenizer.encode_plus(text=question1,
+                                         text_pair=question2,
+                                         add_special_tokens=True,
+                                         max_length=64,
+                                         pad_to_max_length=True,
+                                         return_attention_mask=True,
+                                         return_tensors='pt'
+                                         )
+    input_id = encoded_dict['input_ids']
+    token_type_id = encoded_dict['token_type_ids']
+    attention_mask = encoded_dict['attention_mask']
+
+    logger.info('Predicting labels...')
+    model.eval()
+    with torch.no_grad():
+        loss, logits = model(input_id, token_type_ids=token_type_id,
+                             attention_mask=attention_mask)
+    print("Result Prediction: ", logits)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', type=str,
                         default='model/')
+    parser.add_argument('--q1', type=str, default='')
+    parser.add_argument('--q2', type=str, default='')
     parser.add_argument('--test_data', type=str,
                         default='../data/test.tsv')
     parser.add_argument('--batch_size', type=int, default=32)
@@ -156,4 +188,5 @@ if __name__ == '__main__':
     device = torch.device(device_type)
     logger.debug(device)
 
-    main(opt.model_path, opt.test_data, opt.batch_size)
+    single_infer(opt.model_path, opt.q1, opt.q2)
+    # main(opt.model_path, opt.test_data, opt.batch_size)
