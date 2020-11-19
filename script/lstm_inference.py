@@ -26,7 +26,7 @@ def setup_model(num_vocab, emb_size, hid_size, num_class):
 def encode_input(tokenizer, q1, q2):
     x_raw = tokenizer.encode(args.q1, args.q2)
     x = x_raw.ids
-    x = torch.LongTensor(x)
+    x = torch.LongTensor([x])
 
     return x
 
@@ -39,7 +39,8 @@ def main(args):
     model = load_model(model, args.model_path)
     x = encode_input(tokenizer, args.q1, args.q2)
     y_pred = model(x)
-    print(decode_label(y_pred))
+    y_pred = y_pred.argmax().unsqueeze(dim=0)
+    print(decode_label(y_pred.detach().numpy()))
 
 
 if __name__ == "__main__":
