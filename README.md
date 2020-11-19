@@ -85,13 +85,13 @@ To use the BERT Model
 Train
 
 ```
-python BERT_train.py
+python script/BERT_train.py --dataset_path data/quora_duplicate_questions.tsv --kfold_data_path data/cross_validation_data/1 --model_path model 
 ```
 
 Inference
 
 ```
-python BERT_inference.py
+python script/BERT_inference.py --model_path model --q1 "where are you going" --q2 "where will you go"
 ```
 
 ## Contributors
