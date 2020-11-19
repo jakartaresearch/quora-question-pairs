@@ -32,12 +32,16 @@ def encode_input(tokenizer, q1, q2):
 
 
 def main(args):
+    logger.info("start load tokenizer")
     tokenizer = load_tokenizer(args.tokenizer_path)
     num_vocab = tokenizer.get_vocab_size()
+    logger.info("build model")
     model = setup_model(num_vocab, args.emb_size,
                         args.hid_size, args.num_class)
+    logger.info("load model")
     model = load_model(model, args.model_path)
     x = encode_input(tokenizer, args.q1, args.q2)
+    logger.info("predict the label")
     y_pred = model(x)
     y_pred = y_pred.argmax().unsqueeze(dim=0)
     print(decode_label(y_pred.detach().numpy()))
@@ -57,4 +61,5 @@ if __name__ == "__main__":
     parser.add_argument(
         "--num-class", help="number of class target", default=2, type=int)
     args = parser.parse_args()
+    logger = log(path="logs/", file="lstm.log")
     main(args)

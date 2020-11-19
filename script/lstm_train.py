@@ -180,7 +180,7 @@ def main(args):
                "running_accu": [], "running_accu_v": []}
 
     logger.info("start training...")
-    for epoch in range(1, 101):
+    for epoch in range(1, args.epochs+1):
 
         running_loss = 0
         running_loss_v = 0
@@ -265,6 +265,8 @@ if __name__ == "__main__":
         "--batch-size", help="number of batch size", default=256, type=int)
     parser.add_argument(
         "--lr", help="learning rate for adam optimizer", default=0.001, type=int)
+    parser.add_argument(
+        "--epochs", help="number of epoch", default=50, type=int)
     parser.add_argument(
         "--report-path", help="path for train test loss and accuracy to save", default="reports")
     parser.add_argument(

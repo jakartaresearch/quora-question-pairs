@@ -17,12 +17,16 @@ def load_model(model_path):
 
 
 def main(model_path, q1, q2):
+    logger.info("load model")
     vectorizer_1, vectorizer_2, model = load_model(model_path)
+    logger.info("text cleansing")
     q1 = clean_text(q1)
     q2 = clean_text(q2)
+    logger.info("text transformation")
     vec_q1 = vectorizer_1.transform(np.array([q1]))
     vec_q2 = vectorizer_2.transform(np.array([q2]))
     questions = concat(vec_q1, vec_q2)
+    logger.info("predict the label")
     y_pred = model.predict(questions)
     print(decode_label(y_pred))
 
@@ -33,4 +37,5 @@ if __name__ == "__main__":
     parser.add_argument("--q1", help="question 1", required=True)
     parser.add_argument("--q2", help="question 2", required=True)
     args = parser.parse_args()
+    logger = log(path="logs/", file="ensemble.log")
     main(args.model_path, args.q1, args.q2)
