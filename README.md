@@ -9,12 +9,6 @@ Currently, Quora uses a Random Forest model to identify duplicate questions. In 
 Start Project: 25 April 2020
 End Project: 31 May 2020
 
-Download data [here](https://www.quora.com/q/quoradata/First-Quora-Dataset-Release-Question-Pairs)
-
-Download Clean Data [here](https://drive.google.com/open?id=1_y-K7YJsLg9uIivTsFY_I9uh93FACOlF)
-
-Download Cross Validation Data [here](https://drive.google.com/open?id=18haftEPePeBsVv3dlIPkkpeO29a49ERL)
-
 ## Branch
 
     |--master
@@ -85,7 +79,7 @@ To use the BERT Model
 Train
 
 ```
-python script/BERT_train.py --dataset_path data/quora_duplicate_questions.tsv --kfold_data_path data/cross_validation_data/1 --model_path model 
+python script/BERT_train.py --dataset_path data/quora_duplicate_questions.tsv --kfold_data_path data/cross_validation_data/1 --model_path model
 ```
 
 Inference
