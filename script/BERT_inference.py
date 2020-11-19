@@ -9,6 +9,7 @@ from transformers import BertForSequenceClassification, AdamW, BertConfig
 from transformers import BertTokenizer
 from sklearn.metrics import f1_score, precision_score, recall_score
 from LogWatcher import log
+from utils import decode_label
 
 
 def data_preprocessing(test_data: str, tokenizer) -> torch:
@@ -170,13 +171,9 @@ def single_infer(model_path, question1, question2):
                        attention_mask=attention_mask)
     
     logits = logits[0].detach().cpu().numpy()
-    pred = np.argmax(logits, axis=1).flatten()
+    pred = np.argmax(logits, axis=1)
     
-    if pred[0] == 1 : 
-        pred_label = 'duplicate'
-    else:
-        pred_label = 'not_duplicate'
-        
+    pred_label = decode_label(pred)
     print("Result Prediction: ", pred_label)
 
 
