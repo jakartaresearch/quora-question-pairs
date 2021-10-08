@@ -2,6 +2,7 @@
 *.csv
 *.tsv
 *.rar
+model/
 .vscode/
 __pycache__
 logs/
