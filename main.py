@@ -23,7 +23,7 @@ def read_root():
     return {'message': 'API is running...'}
 
 
-@app.post("/predict/")
+@app.post("/predict/paraphrase/")
 def predict(item: Item):
     item = item.dict()
     engine.predict(item['q1'], item['q2'])

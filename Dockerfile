@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
 WORKDIR /quora-question-pairs
 
 COPY model /quora-question-pairs/model
