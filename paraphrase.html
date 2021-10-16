@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Paraphrase-Identifier</title>
+    </head>
+
+    <body>
+        <form id="form" method="POST">
+            <div><label for="q1">Question 1 :  </label><input type="text" id="question1" placeholder=""/></div>
+            <div><label for="q2">Question 2 :  </label><input type="text" id="question2" placeholder=""/></div>
+            <input type="submit" value="Predict"/>
+        </form>
+    </body>
+    
+    <script>
+        var form = document.getElementById('form')
+        
+        form.addEventListener('submit', function(e){
+            e.preventDefault()
+            
+            var question1 = document.getElementById('question1').value
+            var question2 = document.getElementById('question2').value
+            
+            const payload = {q1: question1, q2:question2} 
+            const payload_str = JSON.stringify(payload)
+            console.log(payload_str)
+            
+            async function hit_api(){
+                const response = await fetch("http://localhost:8000/paraphrase/predict", 
+                                             {method: 'POST', 
+                                              mode: 'no-cors',
+                                              body: payload_str,
+                                              headers:{"Content-Type":"application/json"
+                                                      }
+                                             });
+                const pred = await response
+                console.log(pred)
+                alert(JSON.stringify(response))
+            }
+
+            hit_api().then(pred => {
+              pred; // fetched prediction
+            });
+        })
+    </script>
+</html>
