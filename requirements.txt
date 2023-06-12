@@ -1,7 +1,7 @@
 pandas
 numpy
 torch
-transformers==2.8.0
+transformers==4.30.0
 tokenizers==0.5.2
 gensim
 scikit-learn
